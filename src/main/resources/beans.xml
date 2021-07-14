@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.5.xsd">
+
+	<!-- <bean/> definitions here -->
+	<bean id="dataSource"
+		class="com.mchange.v2.c3p0.ComboPooledDataSource">
+		<property name="driverClass"
+			value="org.mariadb.jdbc.Driver" />
+		<property name="jdbcUrl"
+			value="jdbc:mysql://127.0.0.1:3306/wfo_master" />
+		<property name="user" value="root" />
+		<property name="password" value="root" />
+		 <!-- these are C3P0 properties -->
+        <property name="acquireIncrement" value="1"/>
+        <property name="minPoolSize" value="3"/>
+        <property name="maxPoolSize" value="45"/>
+        <property name="maxIdleTime" value="30"/>
+        <property name="unreturnedConnectionTimeout" value="600"/>
+        <property name="debugUnreturnedConnectionStackTraces" value="true"/>
+
+        <!-- Below properties added to enable caching of prepared statement
+         https://www.mchange.com/projects/c3p0/#maxStatements -->
+        <property name="maxStatementsPerConnection" value="0"/>
+        <property name="maxStatements" value="10"/>
+        <property name="dataSourceName" value="dataSource"/>
+	</bean>
+
+	<bean id="localSessionFactoryBean"
+		class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"></property>
+		<property name="packagesToScan"
+			value="org.simple.lifeiseasy.*"></property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+				<prop key="hibernate.show_sql">true</prop>
+				<!-- <prop key="hibernate.hbm2ddl.auto">none</prop> -->
+				<prop key="hibernate.multiTenancy">SCHEMA</prop>
+				 <prop key="hibernate.multi_tenant_connection_provider">
+                    org.simple.lifeiseasy.hibernatemultitenancy.MultiTenantConnectionProviderImpl
+                </prop>
+                 <prop key="hibernate.tenant_identifier_resolver">
+                     org.simple.lifeiseasy.hibernatemultitenancy.TenantIdentifierResolver
+                </prop>
+			</props>
+		</property>
+	</bean>
+	
+	<bean id="tenantContextSetFilter"
+	class ="org.simple.lifeiseasy.hibernatemultitenancy.filters.TenantContextSetFilter">
+	</bean>
+	
+	<bean id="filterRegistrationBean"
+	class ="org.springframework.boot.web.servlet.FilterRegistrationBean">
+	<property name="filter"><ref bean="tenantContextSetFilter"/></property>
+	<property name="urlPatterns"><value>*</value></property>
+	</bean>
+
+</beans>
